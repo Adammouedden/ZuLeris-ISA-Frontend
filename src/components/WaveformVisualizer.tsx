@@ -35,7 +35,7 @@ const WaveformVisualizer: React.FC<WaveformPanelProps> = ({ featureMapBlocks }) 
               <svg width="100%" height="100%">
                 <polyline
                   fill="none"
-                  stroke="#03f560ff"
+                  stroke="#00b618ff"
                   strokeWidth="2"
                   points={norm
                     .map((v, i) => `${(i / norm.length) * 600},${(1 - v) * 96}`)

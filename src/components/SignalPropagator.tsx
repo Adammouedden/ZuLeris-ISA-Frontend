@@ -62,9 +62,6 @@ const SignalPropagator: React.FC<SignalPropagatorProps> = ({ onPrediction }) => 
       
       //CORE LOGIC FOR SIGNAL PROPAGATION VISUALIZATIONS
 
-      const convBlock = output['conv_block1'].data as Float32Array;
-      const convShape = output['conv_block1'].dims; // e.g. [1, 16, 64]
-
       const featureMapBlocks: number[][][] = [];
 
       for (let i = 1; i <= 4; i++) {

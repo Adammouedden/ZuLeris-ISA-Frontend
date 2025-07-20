@@ -70,6 +70,7 @@ function App() {
                         {prediction !== null ? `T${prediction+1}` : 'None'}
                       </span>
                     </div>
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-400">Feature Map Blocks</span>
                       <span className="text-sm text-white">
