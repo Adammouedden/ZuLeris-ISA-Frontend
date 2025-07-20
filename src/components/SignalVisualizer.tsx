@@ -1,64 +1,91 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface SignalVisualizerProps {
-  featureMaps: number[][];
   predictedLabel: number | null;
+  featureMapBlocks: number[][][]; // shape: [4 blocks][channels][timeSteps]
 }
 
-const SignalVisualizer: React.FC<SignalVisualizerProps> = ({ featureMaps, predictedLabel }) => {
-  if (!featureMaps || featureMaps.length === 0) return null;
+function chunkTo2DGrid(channel: number[], width: number): number[][] {
+  const grid: number[][] = [];
+  for (let i = 0; i < channel.length; i += width) {
+    grid.push(channel.slice(i, i + width));
+  }
+  return grid;
+}
+
+const SignalVisualizer: React.FC<SignalVisualizerProps> = ({
+  predictedLabel,
+  featureMapBlocks,
+}) => {
+  const [tooltip, setTooltip] = useState<{ value: number; x: number; y: number } | null>(null);
+
+  const handleMouseEnter = (event: React.MouseEvent<HTMLDivElement>, value: number) => {
+    setTooltip({
+      value: parseFloat(value.toFixed(4)), // Format to 4 decimal places for display
+      x: event.currentTarget.offsetLeft + event.currentTarget.offsetWidth / 2,
+      y: event.currentTarget.offsetTop + event.currentTarget.offsetHeight / 2,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
 
   return (
-    <div className="mt-10 text-white space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold">🔬 CNN Feature Map Activations</h2>
-        <p className="text-sm text-gray-400">Each grid represents one filter's activation pattern.</p>
-      </div>
+    <div className="text-white space-y-10 relative"> {/* Added relative for tooltip positioning */}
+      <h3 className="text-center text-md text-yellow-150 font-bold">
+        Predicted Transmitter Label:{' '}
+        <span className="text-green-400 font-semibold">
+          {predictedLabel !== null ? predictedLabel+1 : 'N/A'}
+        </span>
+      </h3>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-4">
-        {featureMaps.map((channel, idx) => {
-          const cols = Math.ceil(Math.sqrt(channel.length));
-          const rows = Math.ceil(channel.length / cols);
+      {featureMapBlocks.map((block, blockIdx) => (
+        <div key={blockIdx} className="space-y-4">
+          <h4 className="text-center text-yellow-400 font-bold text-lg">
+            Conv Block {blockIdx + 1}
+          </h4>
 
-          const matrix = [];
-          for (let r = 0; r < rows; r++) {
-            const row = [];
-            for (let c = 0; c < cols; c++) {
-              const i = r * cols + c;
-              row.push(channel[i] ?? 0);
-            }
-            matrix.push(row);
-          }
+          <div className="grid grid-cols-4 gap-6 justify-items-center">
+            {block.map((channel, chIdx) => {
+              const width = Math.ceil(Math.sqrt(channel.length));
+              const grid2D = chunkTo2DGrid(channel, width);
 
-          return (
-            <div key={idx} className="p-2 bg-gray-800 rounded-lg shadow-md">
-              <div className="text-sm text-center mb-2">Filter {idx}</div>
-              <div
-                className="grid gap-[1px]"
-                style={{
-                  gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                }}
-              >
-                {matrix.flat().map((val, i) => (
-                  <div
-                    key={i}
-                    className="w-3 h-3 rounded-sm transition duration-300"
-                    style={{
-                      backgroundColor: `rgba(0, 255, 100, ${Math.min(1, Math.max(0, val))})`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              return (
+                <div key={chIdx} className="space-y-1">
+                  <p className="text-xs text-center text-gray-400">Ch {chIdx}</p>
+                  <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${width}, 1fr)` }}>
+                    {grid2D.flat().map((value, idx) => (
+                      <div
+                        key={idx}
+                        className="w-4 h-4 border border-gray-700 rounded-sm relative"
+                        style={{
+                          backgroundColor: `rgba(0, 255, 0, ${value})`,
+                        }}
+                        onMouseEnter={(e) => handleMouseEnter(e, value)}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
-      {predictedLabel !== null && (
-        <div className="text-center mt-8">
-          <h3 className="text-xl font-semibold text-green-400 animate-pulse">
-            ✅ Predicted Transmitter: <span className="font-mono">T{predictedLabel}</span>
-          </h3>
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="absolute z-50 px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg transition-opacity duration-300 ease-in-out"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y - 30, // Position above the cell
+            transform: 'translateX(-50%)', // Center the tooltip
+          }}
+        >
+          {tooltip.value}
         </div>
       )}
     </div>
