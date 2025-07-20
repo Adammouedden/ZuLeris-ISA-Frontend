@@ -3,11 +3,13 @@ import { Radio, Zap, Brain, Settings } from 'lucide-react';
 import SignalPropagator from './components/SignalPropagator';
 import SignalVisualizer from './components/SignalVisualizer';
 import IntegrationGuide from './components/IntegrationGuide';
+import WaveformVisualizer from './components/WaveformVisualizer';
 
 function App() {
   const [prediction, setPrediction] = useState<number | null>(null);
   const [featureMaps, setFeatureMaps] = useState<number[][]>([]);
   const [showGuide, setShowGuide] = useState(true);
+  const [visualizationMode, setVisualizationMode] = useState<'neural' | 'waveform'>('neural');
 
   const handlePrediction = (result: { label: number; featureMaps: number[][] }) => {
     setPrediction(result.label);
@@ -96,16 +98,47 @@ function App() {
             {/* Visualization Panel */}
             <div className="lg:col-span-2">
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-                <div className="flex items-center space-x-3 mb-6">
-                  <Brain className="w-6 h-6 text-purple-400" />
-                  <h2 className="text-xl font-semibold text-white">Neural Network Visualization</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <Brain className="w-6 h-6 text-purple-400" />
+                    <h2 className="text-xl font-semibold text-white">
+                      {visualizationMode === 'neural' ? 'Neural Network Visualization' : 'Signal Waveforms'}
+                    </h2>
+                  </div>
+                  
+                  <div className="flex bg-white/10 rounded-lg p-1">
+                    <button
+                      onClick={() => setVisualizationMode('neural')}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                        visualizationMode === 'neural'
+                          ? 'bg-purple-500 text-white shadow-sm'
+                          : 'text-gray-300 hover:text-white'
+                      }`}
+                    >
+                      Neural
+                    </button>
+                    <button
+                      onClick={() => setVisualizationMode('waveform')}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                        visualizationMode === 'waveform'
+                          ? 'bg-purple-500 text-white shadow-sm'
+                          : 'text-gray-300 hover:text-white'
+                      }`}
+                    >
+                      Waveform
+                    </button>
+                  </div>
                 </div>
                 
-                {featureMaps.length > 0 ? (
-                  <SignalVisualizer
-                    predictedLabel={prediction}
-                    featureMaps={featureMaps}
-                  />
+                {featureMaps.length > 0 || visualizationMode === 'waveform' ? (
+                  visualizationMode === 'neural' ? (
+                    <SignalVisualizer
+                      predictedLabel={prediction}
+                      featureMaps={featureMaps}
+                    />
+                  ) : (
+                    <WaveformVisualizer />
+                  )
                 ) : (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-16 h-16 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-full flex items-center justify-center mb-4">
